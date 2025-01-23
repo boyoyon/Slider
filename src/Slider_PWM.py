@@ -10,41 +10,12 @@ from matplotlib.widgets import Slider
 duty = 15
 tau = 50
 
-def on_key(event):
-    current_duty = slider_duty.val
-    current_tau  = slider_tau.val
-
-    if event.key == 'right':
-        delta = np.ceil(current_duty * 10) / 10 - current_duty
-        if delta == 0:
-            slider_duty.set_val(current_duty + 0.1)
-        else:
-            slider_duty.set_val(current_duty + delta)
-
-    elif event.key == 'left':
-        delta = current_duty - np.floor(current_duty * 10) / 10
-        if delta == 0:
-            slider_duty.set_val(current_duty - 0.1)
-        else:
-            slider_duty.set_val(current_duty - delta)
-    
-    elif event.key == 'up':
-        delta = np.ceil(current_tau * 10) / 10 - current_tau
-        if delta == 0:
-            slider_tau.set_val(current_tau + 0.1)
-        else:
-            slider_tau.set_val(current_tau + delta)
-    
-    elif event.key == 'down':
-        delta = current_tau - np.floor(current_tau * 10) / 10
-        if delta == 0:
-            slider_tau.set_val(current_tau - 0.1)
-        else:
-            slider_tau.set_val(current_tau - delta)
+slider_duty = None
+slider_tau = None
 
 # 入力パルス
 def system_response(y, t):
-    global duty, tau
+ 
     if t % 100 < duty:
         u = 1.0
     else:
@@ -53,63 +24,89 @@ def system_response(y, t):
     dydt = (-y + u)/tau
     return dydt
 
-# 初期値
-y0 = 0
+def on_key(event):
+    current_duty = slider_duty.val
+    current_tau  = slider_tau.val
 
-t = np.arange(0, 1000, 0.01)
-ut = np.zeros((t.shape), np.float32)
-y = odeint(system_response, y0, t)
+    if event.key == 'right':
+        slider_duty.set_val(current_duty + 1)
 
-fig, ax = plt.subplots(figsize=(15, 3))
-plt_y, = ax.plot(t, y, label='output', c='red')
-plt_ut, = ax.plot(t, ut, label='input', c='blue', alpha = 0.3)
+    elif event.key == 'left':
+        slider_duty.set_val(current_duty - 1)
+    
+    elif event.key == 'up':
+        slider_tau.set_val(current_tau + 1)
+    
+    elif event.key == 'down':
+        slider_tau.set_val(current_tau - 1)
 
-fig.canvas.mpl_connect('key_press_event', on_key)
+def main():
+    global mu, sigma, slider_duty, slider_tau
 
-# 下にスライダーを配置したいので、グラフを上に移動する
-plt.subplots_adjust(bottom=0.3)
+    print('Hit q-key to terminate')
+    print('Slide the lever or hit arrow-key to change parameter')
+    
+    # 初期値
+    y0 = 0
 
-plt_y.axes.set_ylim(0, 1.2)
-
-# Sliderの位置設定
-ax_duty = plt.axes([0.15, 0.09, 0.75, 0.06])
-ax_tau = plt.axes([0.15, 0.03, 0.75, 0.06])
-
-# Sliderオブジェクトのインスタンスの作成
-slider_duty = Slider(ax_duty, 'duty', 1, 100, valinit=15)
-slider_tau = Slider(ax_tau, 'tau', 1, 200, valinit=50)
-
-ax.set_xlabel('t')
-ax.set_ylabel('input, output')
-ax.legend(loc='best')
-ax.grid(ls=':')
-
-print('Hit q-key to terminate')
-print('Slide the lever or hit arrow-key to change parameter')
-
-def updatePlot():
-    global duty, tau
+    t = np.arange(0, 1000, 0.5)
     ut = np.zeros((t.shape), np.float32)
-    ut[t % 100 < duty] = 1.0
-    ut[t % 100 >= duty] = 0.0
     y = odeint(system_response, y0, t)
+    
+    fig, ax = plt.subplots()
 
-    plt_y.set_ydata(y)
-    plt_ut.set_ydata(ut)
+    fig.canvas.mpl_connect('key_press_event', on_key)
 
-def update_duty(slider_val):
-    global duty
-    duty = slider_val
-    updatePlot()
+    # 下にスライダーを配置したいので、グラフを上に移動する
+    plt.subplots_adjust(bottom=0.3)
+    
+    plt.title('PWM Simulation')
+    plt.ylim(0, 1)
+    plt_y, = ax.plot(t, y, label='output', c='red')
+    plt_ut, = ax.plot(t, ut, label='input', c='blue', alpha = 0.3)
 
-def update_tau(slider_val):
-    global tau
-    tau = slider_val
-    updatePlot()
+    plt_y.axes.set_ylim(0, 1.2)
 
-# Slider値変更時の処理の呼び出し
-slider_duty.on_changed(update_duty)
-slider_tau.on_changed(update_tau)
+    # Sliderの位置設定
+    ax_duty = plt.axes([0.15, 0.09, 0.75, 0.06])
+    ax_tau = plt.axes([0.15, 0.03, 0.75, 0.06])
 
-fig.show()
-input('Hit any key to terminate')
+    # Sliderオブジェクトのインスタンスの作成
+    slider_duty = Slider(ax_duty, 'duty', 1, 100, valinit=15)
+    slider_tau = Slider(ax_tau, 'tau', 1, 200, valinit=50)
+
+    ax.set_xlabel('t')
+    ax.set_ylabel('input, output')
+    ax.legend(loc='best')
+    ax.grid(ls=':')
+    
+    def updatePlot():
+
+        ut = np.zeros((t.shape), np.float32)
+        ut[t % 100 < duty] = 1.0
+        ut[t % 100 >= duty] = 0.0
+        y = odeint(system_response, y0, t)
+
+        plt_y.set_ydata(y)
+        plt_ut.set_ydata(ut)
+
+        label = 'duty:%.1f, tau:%.1f' % (duty, tau)
+
+    def update_duty(slider_val=duty):
+        global duty
+        duty = slider_val
+        updatePlot()
+
+    def update_tau(slider_val=tau):
+        global tau
+        tau = slider_val
+        updatePlot()
+
+    # Slider値変更時の処理の呼び出し
+    slider_duty.on_changed(update_duty)
+    slider_tau.on_changed(update_tau)
+
+    plt.show()
+
+if __name__ == '__main__':
+    main()
