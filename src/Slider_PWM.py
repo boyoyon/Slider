@@ -10,6 +10,38 @@ from matplotlib.widgets import Slider
 duty = 15
 tau = 50
 
+def on_key(event):
+    current_duty = slider_duty.val
+    current_tau  = slider_tau.val
+
+    if event.key == 'right':
+        delta = np.ceil(current_duty * 10) / 10 - current_duty
+        if delta == 0:
+            slider_duty.set_val(current_duty + 0.1)
+        else:
+            slider_duty.set_val(current_duty + delta)
+
+    elif event.key == 'left':
+        delta = current_duty - np.floor(current_duty * 10) / 10
+        if delta == 0:
+            slider_duty.set_val(current_duty - 0.1)
+        else:
+            slider_duty.set_val(current_duty - delta)
+    
+    elif event.key == 'up':
+        delta = np.ceil(current_tau * 10) / 10 - current_tau
+        if delta == 0:
+            slider_tau.set_val(current_tau + 0.1)
+        else:
+            slider_tau.set_val(current_tau + delta)
+    
+    elif event.key == 'down':
+        delta = current_tau - np.floor(current_tau * 10) / 10
+        if delta == 0:
+            slider_tau.set_val(current_tau - 0.1)
+        else:
+            slider_tau.set_val(current_tau - delta)
+
 # 入力パルス
 def system_response(y, t):
     global duty, tau
@@ -32,6 +64,8 @@ fig, ax = plt.subplots(figsize=(15, 3))
 plt_y, = ax.plot(t, y, label='output', c='red')
 plt_ut, = ax.plot(t, ut, label='input', c='blue', alpha = 0.3)
 
+fig.canvas.mpl_connect('key_press_event', on_key)
+
 # 下にスライダーを配置したいので、グラフを上に移動する
 plt.subplots_adjust(bottom=0.3)
 
@@ -49,6 +83,9 @@ ax.set_xlabel('t')
 ax.set_ylabel('input, output')
 ax.legend(loc='best')
 ax.grid(ls=':')
+
+print('Hit q-key to terminate')
+print('Slide the lever or hit arrow-key to change parameter')
 
 def updatePlot():
     global duty, tau

@@ -6,19 +6,58 @@ from matplotlib.widgets import Slider
 num_samples = 100
 _lambda = 0.5
 
+slider_lambda = None
+
+
+def on_key(event):
+    current_lambda = slider_lambda.val
+
+    if event.key == 'right':
+        delta = np.ceil(current_lambda * 100) / 100 - current_lambda
+        if delta == 0:
+            slider_lambda.set_val(current_lambda + 0.01)
+        else:
+            slider_lambda.set_val(current_lambda + delta)
+
+    elif event.key == 'left':
+        delta = current_lambda - np.floor(current_lambda * 100) / 100
+        if delta == 0:
+            slider_lambda.set_val(current_lambda - 0.01)
+        else:
+            slider_lambda.set_val(current_lambda - delta)
+    
+    elif event.key == 'up':
+        delta = np.ceil(current_lambda * 10) / 10 - current_lambda
+        if delta == 0:
+            slider_lambda.set_val(current_lambda + 0.1)
+        else:
+            slider_lambda.set_val(current_lambda + delta)
+    
+    elif event.key == 'down':
+        delta = current_lambda - np.floor(current_lambda * 10) / 10
+        if delta == 0:
+            slider_lambda.set_val(current_lambda - 0.1)
+        else:
+            slider_lambda.set_val(current_lambda - delta)
+
 def bernoulli(x, _lambda = 0.1):
 
     y = _lambda ** x * (1 - _lambda) ** (1-x)
     return y
 
 def main():
-    global _lambda
+    global _lambda, slider_lambda
+
+    print('Hit q-key to terminate')
+    print('Slide the lever or hit arrow-key to change parameter')
 
     points = np.linspace(0, 1, num_samples)
 
     y = bernoulli(points, _lambda)
 
-    fig = plt.subplot(1, 1, 1)
+    fig, ax = plt.subplots()
+
+    fig.canvas.mpl_connect('key_press_event', on_key)
 
     # 下にスライダーを配置したいので、グラフを上に移動する
     plt.subplots_adjust(bottom=0.3)

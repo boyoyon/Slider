@@ -6,6 +6,40 @@ from matplotlib.widgets import Slider
 num_samples = 100
 mu = 0.0
 sigma = 1.0
+slider_mu = None
+slider_sigma = None
+
+def on_key(event):
+    current_mu = slider_mu.val
+    current_sigma  = slider_sigma.val
+
+    if event.key == 'right':
+        delta = np.ceil(current_mu * 10) / 10 - current_mu
+        if delta == 0:
+            slider_mu.set_val(current_mu + 0.1)
+        else:
+            slider_mu.set_val(current_mu + delta)
+
+    elif event.key == 'left':
+        delta = current_mu - np.floor(current_mu * 10) / 10
+        if delta == 0:
+            slider_mu.set_val(current_mu - 0.1)
+        else:
+            slider_mu.set_val(current_mu - delta)
+    
+    elif event.key == 'up':
+        delta = np.ceil(current_sigma * 10) / 10 - current_sigma
+        if delta == 0:
+            slider_sigma.set_val(current_sigma + 0.1)
+        else:
+            slider_sigma.set_val(current_sigma + delta)
+    
+    elif event.key == 'down':
+        delta = current_sigma - np.floor(current_sigma * 10) / 10
+        if delta == 0:
+            slider_sigma.set_val(current_sigma - 0.1)
+        else:
+            slider_sigma.set_val(current_sigma - delta)
 
 def calc_coeff(mu, sigma):
 
@@ -20,14 +54,19 @@ def normal(x, mu=0, sigma=1):
     return y
 
 def main():
-    global mu, sigma
+    global mu, sigma, slider_mu, slider_sigma
+
+    print('Hit q-key to terminate')
+    print('Slide the lever or hit arrow-key to change parameter')
 
     points = np.linspace(-5, 5, num_samples)
 
     y = normal(points, mu, sigma)
 
-    fig = plt.subplot(1, 1, 1)
+    fig, ax = plt.subplots()
 
+    fig.canvas.mpl_connect('key_press_event', on_key)
+    
     # 下にスライダーを配置したいので、グラフを上に移動する
     plt.subplots_adjust(bottom=0.3)
     

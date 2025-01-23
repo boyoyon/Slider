@@ -8,19 +8,59 @@ num_samples = 100
 alpha = 2
 beta = 2
 
+slider_alpha = None
+slider_beta = None
+
+def on_key(event):
+    current_alpha = slider_alpha.val
+    current_beta  = slider_beta.val
+
+    if event.key == 'right':
+        delta = np.ceil(current_alpha * 10) / 10 - current_alpha
+        if delta == 0:
+            slider_alpha.set_val(current_alpha + 0.1)
+        else:
+            slider_alpha.set_val(current_alpha + delta)
+
+    elif event.key == 'left':
+        delta = current_alpha - np.floor(current_alpha * 10) / 10
+        if delta == 0:
+            slider_alpha.set_val(current_alpha - 0.1)
+        else:
+            slider_alpha.set_val(current_alpha - delta)
+    
+    elif event.key == 'up':
+        delta = np.ceil(current_beta * 10) / 10 - current_beta
+        if delta == 0:
+            slider_beta.set_val(current_beta + 0.1)
+        else:
+            slider_beta.set_val(current_beta + delta)
+    
+    elif event.key == 'down':
+        delta = current_beta - np.floor(current_beta * 10) / 10
+        if delta == 0:
+            slider_beta.set_val(current_beta - 0.1)
+        else:
+            slider_beta.set_val(current_beta - delta)
+
 def calc_beta(x, alpha=alpha, beta=beta):
     
     y = gamma(alpha+beta)/(gamma(alpha)*gamma(beta)) * x ** (alpha-1) * (1 - x) ** (beta - 1)
     return y
 
 def main():
-    global mu, sigma
+    global mu, sigma, slider_alpha, slider_beta
 
+    print('Hit q-key to terminate')
+    print('Slide the lever or hit arrow-key to change parameter')
+    
     points = np.linspace(0, 1, num_samples)
 
     y = calc_beta(points, alpha, beta)
 
-    fig = plt.subplot(1, 1, 1)
+    fig, ax = plt.subplots()
+
+    fig.canvas.mpl_connect('key_press_event', on_key)
 
     # 下にスライダーを配置したいので、グラフを上に移動する
     plt.subplots_adjust(bottom=0.3)
